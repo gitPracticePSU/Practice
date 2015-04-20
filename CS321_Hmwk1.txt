@@ -1,0 +1,347 @@
+Colleen Toth
+Prof. Mark Jones
+Homework 1
+13 January 2014
+
+Part 1:
+
+	1.) Sample program:
+
+        angryProg.f
+
+	    	int main(){
+	        	cout << "Hello World!" << endl;
+
+	        	return 0;
+	     	}
+
+        $g++ angryProg.f
+
+    	Output:  
+    		ld: warning: ignoring file angryProg.f, file was built for unsupported file format ( 0x69 0x6E 0x74 0x20 0x6D 0x61 0x69 0x6E 0x28 0x29 0x7B 0x0A 0x20 0x20 0x20 0x20 ) which is not the architecture being linked (x86_64): angryProg.f
+    		Undefined symbols for architecture x86_64:
+     		"_main", referenced from:
+     		implicit entry/start for main executable
+    		ld: symbol(s) not found for architecture x86_64
+    		clang: error: linker command failed with exit code 1 (use -v to see invocation)
+
+    	This error is caught because this is improper file format for the compiler. It can't compile this code. The program itself is valid C++ so if compiled as a .cpp file would work. Thus it could not have made it past source input otherwise it would have made a valid executable file.
+
+
+    2a.) Sample progam:
+
+         anotherAngryProg.cpp
+
+            #include <iostream>
+            using namespace std;
+
+         	int main(){
+
+         		float i = 1.1.a
+
+         		cout << i << endl;
+
+         		return 0;
+         	}
+
+         Output:
+         	anotherAngryProg.cpp:6:16: error: invalid suffix '.a' on floating constant
+    	 	int i = 1.1.a
+            	   ^
+		 	1 error generated.
+
+		 Here the lexer cannot correctly turn this into a token. According to Maximal munch, the lexer grabs the 1.1 and sees it as a float, however it cannot resolve the .a. If it were simply 1.1 it would tokenize, however 1.a would also generate an error since a cannot be resolved to a float. The lexer does not have grammar rules for transitioning on .a after a float. This occurred during lexical analysis because if we model this as a state machine, this would would not land in an accepting state and this type of tokenization needs to occur before handing off to the parser that would use the tokens to build an AST.
+
+
+	2b.) Sample program:
+
+			yetAnotherAngryProg.cpp
+
+			#include <iostream>
+  			using namespace std;
+
+   			int main(){
+  
+   
+    			string i = "Hello There!";
+    			/*
+            	cout << i  << endl;
+
+            	return 0;
+			}
+
+		Output:
+			yetAnotherAngryProg.cpp:8:1: error: unterminated /* comment
+			/*
+			^
+			yetAnotherAngryProg.cpp:12:12: error: expected '}'
+            	    }
+                	 ^
+			yetAnotherAngryProg.cpp:4:11: note: to match this '{'
+			int main(){
+          	^
+			2 errors generated.
+
+		The problem that arises with this program is the stray block comment is never closed. As a result everything after the "/*" is considered part of the single token and as a result causes other problems (issues with parens, etc because the rest of the program was considered a comment) that otherwise was perfectly valid C++. This had to occur during the lexical analysis because the compiler must handle comments before the parser gets a hold of the program so it did not make it far enough to make an abstract syntax tree. It passed source input because all the characters are valid, and if the comment is removed compiles correctly, so it must occur during lexical analysis.
+
+
+
+	3a.) Sample Program:
+
+		anAngryAngryProg.cpp
+
+			#include <iostream>
+  			using namespace std;
+
+   			int main(){
+
+   			int total = 0;
+
+   			fr (int i = 0; i < 10; ++i){
+   				total += i;
+   			}
+
+   			return 0;
+   			}
+
+   		Output:
+   			anAngryAngryProg.cpp:8:10: error: expected '(' for function-style cast or type construction
+        	fr (int i = 0; i < 10; ++i){
+            ~~~ ^
+			anAngryAngryProg.cpp:8:17: error: use of undeclared identifier 'i'
+        	fr (int i = 0; i < 10; ++i){
+                       ^
+			anAngryAngryProg.cpp:8:27: error: use of undeclared identifier 'i'
+        	fr (int i = 0; i < 10; ++i){
+                                 ^
+			3 errors generated.
+
+		This error clearly is the result of a misspelled keyword which would yield an incorrect abstract syntax tree. Since "for" is misspelled, when it goes to parse the rest of the statement, it finds it invalid because it is not parsed as part of a for loop, but some other statement. This is not a lexical error because the lexer would not care that it was misspelled and would still find it a valid token. Source input would not error as well, since even though it is misspelled, these are all still valid characters.
+
+
+	3b.) Sample Program:
+
+		 aHangryProg.cpp
+
+			#include <iostream>
+  			using namespace std;
+
+  			int main (){
+
+  			5 = int x;
+
+  			if (x == 5)
+  				cout << "I'm so hungry/angry, I'm hangry!" << endl;
+
+
+  			return 0;
+  			}
+
+  		Output:
+  			aHangryProg.cpp:6:10: error: expected '(' for function-style cast or type construction
+        	5 = int x
+            ~~~ ^
+			1 error generated.
+
+		This error would result in an improper abstract syntax tree. It would attempt to store a primitive in a constant and would error in parsing. On the lexical level, all the elements can be made into tokens (follows CFG rules), so this passes lexical analysis. Furthermore all the characters are also valid, meaning it would pass source input inspection. 
+
+
+	4a.) Sample Program:
+
+		aStillAngryProg.cpp
+
+			#include <iostream>
+  			using namespace std;
+
+  			int main (){
+
+  				int x = "Five";
+
+  				cout << x << endl;
+
+  				return 0;
+  			}
+
+  		Output:
+  			aStillAngryProg.cpp:6:11: error: cannot initialize a variable of type 'int' with an lvalue of type 'const char [5]'
+                                int x = "Five";
+                                    ^   ~~~~~~
+			1 error generated.
+
+		This is a type mismatch error and is not allowed without specific type casting in C++. Type mismatch errors are handled by static analysis. All of the characters above are valid, so this would pass source input checking. Each of the these would create lexical tokens without issue and would create an abstract syntax tree, so the error must occur in static analysis.
+
+
+	4b.) Sample Program:
+
+		stillAngry.cpp
+
+			#include <iostream>
+			using namespace std;
+
+	    	int main () {
+
+	    		int sum = 0;
+
+	    		for (i = 0; i < 10; ++i){
+	    			sum += i;
+	    		}
+
+	    		return 0;
+	    	}
+
+	    Output:
+	    	stillAngry.cpp:8:12: error: use of undeclared identifier 'i'
+                for (i = 0; i < 10; ++i){
+                     ^
+			stillAngry.cpp:8:19: error: use of undeclared identifier 'i'
+                for (i = 0; i < 10; ++i){
+                            ^
+			stillAngry.cpp:8:29: error: use of undeclared identifier 'i'
+                for (i = 0; i < 10; ++i){
+                                      ^
+			stillAngry.cpp:9:15: error: use of undeclared identifier 'i'
+                        sum += i;
+                               ^
+			4 errors generated.
+
+		This is another example of an error caught by static analysis. All of the characters are valid, so it passes the source input stage. All the characters are valid C++ and conform to valid grammar rules and would pass tokenization in lexical analysis and a parse tree could be made from the code. So this error would have to occur in the static analysis face where semantics are checked. 
+
+
+Part 2:
+
+	2a.) In order to get the code mentioned in the question to run, we first must comment out the reader, the source, the lexer, and the parser because we already have the code for a complete abstract syntax tree so these steps are unnecessary. 
+  We need to insert the given code after the catch from checking command line arguments but before the scope, type and init handlers, as that is part of static analysis that we run on the ast after parsing for final checks. We also need to comment out the code under output compiled program and invoke the assembler since we want the compiler to execute the program generated above and don't need to output a filename or create the executable file. To invoke the program we need to add prog.exec() after prog.simplify(). I also added a print statement that prints "Done!" after execution.
+
+  Output from running:
+    4950
+    Done!
+
+    We know from the guassian sum that the sum of any number of digits can be determined using the formula n(n+1)/2, which when using 99, we get 99(100)/2, which results in 4950 verifying our output.
+
+  Output from generating code using the given ast code using the compiler in minitour/19:
+    int sum, n, i;
+    sum = 0;
+    n = 100;
+    i = 0;
+    while (i<n) {
+      sum = sum+i;
+      i = i+1;
+    }
+    print sum;
+
+    This indicates that the ast is correct from the given mini program above the ast code.
+
+  Output from changing n from n = 100 to n = 200:
+    19900
+    Done!
+
+    This shows that the code does indeed change when n changes. We can use the same formula we used on the sum to 100 to determine the sum to 200, 199(200)/2, which yields 19,900. This is the answer we recieved as output confirming the program is summing correctly.
+
+
+	2b.)
+        int n, i;
+        n = 100;
+        i = 1;
+
+        while (i<n) {
+          if (((i/15)*15)==i)        
+            print 15;
+
+          else
+            if (((i/5)*5)==i)            
+              print 5;
+
+            else
+              if (((i/3)*3)==i)                
+                print 3;
+
+              else
+                i = i;
+            i = i+1;
+        }
+
+	2c.)
+		int total, n, i;
+      total = 1;
+   		i = 1;
+
+      if (n != 0){
+   		 while (i<=n) {
+       	     total = total * i;
+       		   i = i+1;
+   		     }
+        }
+   		 print total;
+
+      }
+
+   2d.)
+
+   		Position pos = null;    // a dummy position
+
+   		Id i         = new Id(pos,"i");    // identifiers used
+   		Id n         = new Id(pos,"n");
+   		Id total     = new Id(pos,"total");
+
+   		IntLit i0    = new IntLit(pos,0);  // Initializing identifiers above
+   		IntLit i2    = new IntLit(pos, j);
+   		IntLit i1    = new IntLit(pos,1);
+
+   		Stmt   s1    = new VarDecl(pos, Type.INT, new Id[]{total,n,i}); //declare variables
+   		Stmt   s2    = new Assign(pos, total, i1); //total = 1
+   		Stmt   s3    = new Assign(pos, n, i0); //n = j, passed in from outside either user input or testing
+   		Stmt   s4    = new Assign(pos, i, i0); // i = 0
+   		Stmt   body1 = new Assign(pos, total, new Mul(pos, total, i)); // multiply total by i - to be done in the loop
+   		Stmt   body2 = new Assign(pos, i,   new Add(pos, i,   i1));  // increment i by 1 
+   		Stmt   body  = new Block(new Stmt[] {body1, body2});  
+   		Stmt   s5    = new While(pos, new Lt(null, i, n), body);
+   		Stmt   s6    = new Print(pos, total);  //print the total after exiting the loop
+   		Stmt   prog  = new Block(new Stmt[]{s1, s2, s3, s4, s5, s6});
+
+
+      Output - testing for first 10 factorials:
+
+        Ready to run the program:
+        3628800
+        Ready to run the program:
+        362880
+        Ready to run the program:
+        40320
+        Ready to run the program:
+        5040
+        Ready to run the program:
+        720
+        Ready to run the program:
+        120
+        Ready to run the program:
+        24
+        Ready to run the program:
+        6
+        Ready to run the program:
+        2
+        Ready to run the program:
+        1
+        Ready to run the program:
+        1
+        0x6Done!
+
+        First 10 factorials to verify output:
+          0 1
+          1 1
+          2 2
+          3 6
+          4 24
+          5 120
+          6 720
+          7 5040
+          8 40320
+          9 362880
+          10  3628800
+
+
+
+
+
+
+
+
